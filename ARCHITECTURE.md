@@ -6,12 +6,14 @@ This document describes the components, data flow, and design goals of the AI fi
 - Run locally and remain under 1GB VRAM.
 - Produce explainable recommendations.
 - Learn from explicit user feedback.
-- Keep enforcement outside of this project.
+- Hand enforcement to Pi-hole through an exported blocklist file.
 - Support endpoint heuristics without invasive actions.
 
 ## Components
 - Log ingestion: parses Pi-hole/dnsmasq logs into structured DNS queries.
-- Feature extraction: computes entropy, length, burstiness, rare TLDs, and per-device novelty.
+- Threat intel: downloads blocklist feeds and matches each query and its parent domains (`intel.py`).
+- Blocklist export: merges blocked domains into a file Pi-hole loads (`blocklist.py`).
+- Feature extraction: entropy of the most random label, length, distinct-subdomain bursts per parent domain, rare TLDs, and per-device first-seen TLDs.
 - Models:
   - Statistical anomaly model (default)
   - Online logistic model (optional)
@@ -41,7 +43,7 @@ This document describes the components, data flow, and design goals of the AI fi
 - `trm_stub`: placeholder, linear scorer.
 
 ## Policy and safety
-Policy does not enforce blocking. It only emits candidates once they cross confirmation thresholds. Enforce externally after review.
+The tool never touches traffic itself. It writes a blocklist file; Pi-hole enforces it. `never_block` domains are excluded from every blocking path.
 
 ## Files of interest
 - `src/ai_firewall/cli.py`: pipeline entry point

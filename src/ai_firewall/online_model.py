@@ -14,7 +14,7 @@ class OnlineLogisticModel:
         score = self.bias
         for key, value in features.items():
             score += self.weights.get(key, 0.0) * value
-        return 1.0 / (1.0 + math.exp(-score))
+        return 1.0 / (1.0 + math.exp(-max(-60.0, min(60.0, score))))
 
     def update(self, features: dict[str, float], label: int) -> float:
         prediction = self.predict_proba(features)
@@ -26,8 +26,8 @@ class OnlineLogisticModel:
 
 
 def load_model(path: str, learning_rate: float) -> OnlineLogisticModel:
-    model_path = Path(path)
-    if not model_path.exists():
+    model_path = Path(path) if path else None
+    if model_path is None or not model_path.exists():
         return OnlineLogisticModel(weights={}, bias=0.0, learning_rate=learning_rate)
     data = json.loads(model_path.read_text(encoding="utf-8"))
     return OnlineLogisticModel(

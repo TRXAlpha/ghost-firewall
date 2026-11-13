@@ -9,6 +9,7 @@ This is a simplified reference for JSON inputs/outputs.
 {
   "summary": {
     "total": 1200,
+    "blocked": 2,
     "recommended": 12,
     "learned": 8,
     "endpoint_findings": 3
@@ -24,7 +25,8 @@ This is a simplified reference for JSON inputs/outputs.
         "length": false,
         "rare_tld": true,
         "burst": false,
-        "new_tld": true
+        "new_tld": true,
+        "intel": false
       },
       "score": 0.84,
       "decision": "recommend"

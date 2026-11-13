@@ -3,12 +3,12 @@
 Utility scripts for daily operations.
 
 ## `scripts/run_daily.ps1`
-Runs DNS analysis.
+Refreshes threat feeds, runs DNS analysis, and writes the report, state and `blocklist.txt` into one folder. Add `-AutoBlock` to blocklist high-scoring anomalies without review.
 
 Usage:
 
 ```powershell
-.\scripts\run_daily.ps1 -LogPath C:\path\pihole.log -ConfigPath C:\Users\chris\Documents\Ghost\codex\ai_firewall_trm\config\example_config.json -OutJson C:\path\report.json -OutText C:\path\report.txt
+.\scripts\run_daily.ps1 -LogPath C:\path\pihole.log -ConfigPath .\config\example_config.json -StateDir C:\path\state
 ```
 
 ## `scripts/collect_endpoint.ps1`
