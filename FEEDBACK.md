@@ -5,7 +5,7 @@ The system learns from explicit feedback. This keeps control in your hands and a
 ## Workflow
 1) Generate a report from DNS logs.
 2) Generate a feedback template from the report.
-3) Edit labels to `allow` or `block`.
+3) Edit labels to `allow` or `block`. Entries left as `review`, or with an unrecognised label, are ignored.
 4) Run again with `--learn` to update model state.
 
 ## Generate template
@@ -32,8 +32,8 @@ python src/ai_firewall/cli.py --log "C:\path\to\pihole.log" --config config\exam
 ```
 
 ## Label meaning
-- `allow`: reduce suspicion and lower future scores.
+- `allow`: reduce suspicion, lower future scores, and remove the domain from the blocklist file.
 - `block`: increase suspicion and track confirmations.
 
 ## Safety
-Feedback never directly blocks traffic. It only influences future recommendations and the policy candidate list.
+One `block` label is one confirmation per run. A domain reaches the blocklist file only after `auto_promote_after` confirmations.

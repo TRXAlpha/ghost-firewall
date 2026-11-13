@@ -1,8 +1,19 @@
 param(
     [Parameter(Mandatory = $true)][string]$LogPath,
     [Parameter(Mandatory = $true)][string]$ConfigPath,
-    [Parameter(Mandatory = $true)][string]$OutJson,
-    [string]$OutText
+    [Parameter(Mandatory = $true)][string]$StateDir,
+    [switch]$AutoBlock
 )
 
-python "$PSScriptRoot\..\src\ai_firewall\cli.py" --log $LogPath --config $ConfigPath --out $OutJson --text $OutText
+# Daily run: refresh threat feeds, analyze the log, write report + blocklist
+# into $StateDir. Point Pi-hole at $StateDir\blocklist.txt (see README).
+$cli = @(
+    "$PSScriptRoot\..\src\ai_firewall\cli.py",
+    "--log", $LogPath,
+    "--config", $ConfigPath,
+    "--state-dir", $StateDir,
+    "--update-intel"
+)
+if ($AutoBlock) { $cli += "--auto-block" }
+python @cli
+exit $LASTEXITCODE

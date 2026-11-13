@@ -40,7 +40,7 @@ class StatisticalModel:
             stat = self.stats.get(key)
             if not stat or stat.count < 2 or stat.stddev == 0.0:
                 continue
-            zscores.append(abs((value - stat.mean) / stat.stddev))
+            zscores.append(max(0.0, (value - stat.mean) / stat.stddev))
         avg_z = sum(zscores) / len(zscores) if zscores else 0.0
         domain_adjust = self.domain_bias.get(domain.lower(), 0.0)
         combined = avg_z + domain_adjust
@@ -66,7 +66,7 @@ def load_statistical_model(path: str, zscore_threshold: float) -> StatisticalMod
     model_path = Path(path)
     if not model_path.exists():
         return StatisticalModel(stats={}, domain_bias={}, zscore_threshold=zscore_threshold)
-    data = json.loads(model_path.read_text(encoding="utf-8"))
+    data = json.loads(model_path.read_text(encoding="utf-8-sig"))
     stats = {}
     for key, payload in data.get("stats", {}).items():
         stats[key] = RunningStat(

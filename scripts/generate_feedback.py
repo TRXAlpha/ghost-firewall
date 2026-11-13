@@ -10,20 +10,18 @@ def main() -> None:
     args = parser.parse_args()
 
     payload = json.loads(Path(args.report).read_text(encoding="utf-8"))
-    items = payload.get("items", [])
 
-    labels = []
-    for item in items:
-        labels.append(
-            {
-                "domain": item.get("domain"),
-                "client": item.get("client"),
-                "label": "review",
-            }
-        )
+    # One entry per domain. "review" is a placeholder the analyzer ignores:
+    # change it to "allow" or "block", or leave it to skip the domain.
+    labels, seen = [], set()
+    for item in payload.get("items", []):
+        domain = item.get("domain")
+        if not domain or domain in seen or item.get("decision") == "block":
+            continue
+        seen.add(domain)
+        labels.append({"domain": domain, "label": "review", "score": item.get("score")})
 
-    feedback = {"labels": labels}
-    Path(args.out).write_text(json.dumps(feedback, indent=2), encoding="utf-8")
+    Path(args.out).write_text(json.dumps({"labels": labels}, indent=2), encoding="utf-8")
 
 
 if __name__ == "__main__":
