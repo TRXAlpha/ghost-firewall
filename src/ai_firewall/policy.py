@@ -25,7 +25,9 @@ class PolicyState:
             except ValueError:
                 continue
             if last < cutoff and domain in self.confirmations:
+                # One step per decay window, not one step per run.
                 self.confirmations[domain] = max(0, self.confirmations[domain] - 1)
+                self.last_seen[domain] = now.isoformat()
 
     def update(self, domain: str, label: int, now: datetime) -> None:
         if not domain:
@@ -46,7 +48,7 @@ def load_policy_state(path: str) -> PolicyState:
     state_path = Path(path)
     if not state_path.exists():
         return PolicyState(confirmations={}, last_seen={})
-    payload = json.loads(state_path.read_text(encoding="utf-8"))
+    payload = json.loads(state_path.read_text(encoding="utf-8-sig"))
     return PolicyState(
         confirmations=payload.get("confirmations", {}),
         last_seen=payload.get("last_seen", {}),

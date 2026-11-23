@@ -12,16 +12,19 @@ Runbook and operational guidance for the AI firewall.
 ## Scheduling
 Use Task Scheduler to run:
 - `scripts/collect_endpoint.ps1` (optional)
-- `scripts/run_daily.ps1` for DNS log analysis
+- `scripts/run_daily.ps1` to refresh threat feeds, analyze the log, and update the blocklist
+
+After each run, reload Pi-hole with `pihole -g` so it picks up the new `blocklist.txt`.
 
 ## Example scheduled run
 
 ```powershell
 .\scripts\collect_endpoint.ps1 -OutPath C:\path\endpoint_snapshot.json -SinceHours 24
-python C:\Users\chris\Documents\Ghost\codex\ai_firewall_trm\src\ai_firewall\cli.py --log C:\path\pihole.log --config C:\Users\chris\Documents\Ghost\codex\ai_firewall_trm\config\example_config.json --model C:\path\model.json --endpoint C:\path\endpoint_snapshot.json --out C:\path\report.json
+.\scripts\run_daily.ps1 -LogPath C:\path\pihole.log -ConfigPath .\config\example_config.json -StateDir C:\path\state
 ```
 
 ## Troubleshooting
+- `total=0`: the log has no `query[...]` lines. Enable query logging in Pi-hole.
 - No findings: Check `decision_threshold` and `zscore_threshold`.
 - Too many findings: Increase `decision_threshold` or add feedback labels.
 - Endpoint snapshot empty: run PowerShell as Administrator to access Security logs.

@@ -8,19 +8,19 @@ class TinyModelResult:
 
 
 class TinyRecursiveModel:
-    """Lightweight linear scorer as a placeholder for TRM/CTM models."""
+    """Fixed-weight linear scorer. It is a placeholder for a future TRM/CTM
+    model and does not learn. Inputs must be normalized to 0..1."""
 
-    def __init__(self, weights: dict[str, float]) -> None:
+    def __init__(self, weights: dict[str, float], threshold: float = 0.7) -> None:
         self.weights = weights
+        self.threshold = threshold
 
     def infer(self, features: dict[str, float]) -> TinyModelResult:
-        score = 0.0
-        for key, value in features.items():
-            weight = self.weights.get(key, 0.0)
-            score += weight * value
-        decision = "flag" if score >= 1.0 else "allow"
-        return TinyModelResult(score=score, decision=decision)
+        total = sum(self.weights.values()) or 1.0
+        score = sum(self.weights.get(k, 0.0) * min(1.0, max(0.0, v)) for k, v in features.items())
+        score /= total
+        return TinyModelResult(score=score, decision="flag" if score >= self.threshold else "allow")
 
 
-def load_trm(weights: dict[str, float]) -> TinyRecursiveModel:
-    return TinyRecursiveModel(weights or {})
+def load_trm(weights: dict[str, float], threshold: float = 0.7) -> TinyRecursiveModel:
+    return TinyRecursiveModel(weights or {}, threshold)

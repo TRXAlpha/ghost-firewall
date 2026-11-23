@@ -37,7 +37,9 @@ $processes = Get-CimInstance Win32_Process | ForEach-Object {
 $startupItems = Get-CimInstance Win32_StartupCommand | ForEach-Object {
     $sigStatus = $null
     if ($_.Command) {
-        $exePath = $_.Command.Split(" ")[0].Trim('"')
+        if ($_.Command -match '^"([^"]+)"') { $exePath = $Matches[1] }
+        elseif ($_.Command -match '^(.+?\.exe)') { $exePath = $Matches[1] }
+        else { $exePath = $_.Command.Split(" ")[0] }
         if (Test-Path $exePath) {
             try {
                 $sig = Get-AuthenticodeSignature -FilePath $exePath
@@ -144,4 +146,7 @@ $payload = [PSCustomObject]@{
     event_logs = $eventLogs
 }
 
-$payload | ConvertTo-Json -Depth 5 | Set-Content -Path $OutPath -Encoding UTF8
+# WriteAllText emits UTF-8 without a BOM on every PowerShell version.
+$json = $payload | ConvertTo-Json -Depth 5
+$fullPath = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine((Get-Location).Path, $OutPath))
+[System.IO.File]::WriteAllText($fullPath, $json)

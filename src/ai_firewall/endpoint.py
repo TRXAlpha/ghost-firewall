@@ -1,3 +1,4 @@
+import ipaddress
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -19,23 +20,21 @@ def _is_user_path(path: str) -> bool:
 
 
 def _is_private_ip(ip: str) -> bool:
-    if not ip or ip == "0.0.0.0":
-        return True
-    if ip.startswith("10.") or ip.startswith("192.168."):
-        return True
-    if ip.startswith("127.") or ip.startswith("::1"):
-        return True
-    if ip.startswith("172."):
-        try:
-            octet = int(ip.split(".")[1])
-            return 16 <= octet <= 31
-        except (IndexError, ValueError):
-            return False
-    return False
+    """True for anything that is not a routable public address."""
+    try:
+        return not ipaddress.ip_address((ip or "").split("%")[0]).is_global
+    except ValueError:
+        return True  # empty or unparseable: nothing to report
+
+
+def _is_unsigned(signature) -> bool:
+    """Only an explicit bad verdict counts. A missing status means the
+    collector could not read the file (no admin rights), not that it is unsigned."""
+    return (signature or "").strip().lower() not in {"", "valid", "unknown"}
 
 
 def load_endpoint_snapshot(path: str) -> dict:
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    return json.loads(Path(path).read_text(encoding="utf-8-sig"))
 
 
 def _extract_event_findings(events: list[dict]) -> list[EndpointFinding]:
@@ -119,8 +118,7 @@ def analyze_endpoint(snapshot: dict, baseline: dict | None = None) -> list[Endpo
 
     for proc in snapshot.get("processes", []):
         path = proc.get("path") or ""
-        signature = proc.get("signature_status") or ""
-        if path and _is_user_path(path) and signature.lower() != "valid":
+        if path and _is_user_path(path) and _is_unsigned(proc.get("signature_status")):
             findings.append(
                 EndpointFinding(
                     category="process",
@@ -131,8 +129,7 @@ def analyze_endpoint(snapshot: dict, baseline: dict | None = None) -> list[Endpo
 
     for item in snapshot.get("startup_items", []):
         path = item.get("command") or ""
-        signature = item.get("signature_status") or ""
-        if path and _is_user_path(path) and signature.lower() != "valid":
+        if path and _is_user_path(path) and _is_unsigned(item.get("signature_status")):
             findings.append(
                 EndpointFinding(
                     category="startup",
@@ -157,8 +154,7 @@ def analyze_endpoint(snapshot: dict, baseline: dict | None = None) -> list[Endpo
         if _is_private_ip(remote):
             continue
         proc = conn.get("process_name") or ""
-        signature = conn.get("signature_status") or ""
-        if signature.lower() != "valid":
+        if _is_unsigned(conn.get("signature_status")):
             findings.append(
                 EndpointFinding(
                     category="network",

@@ -1,6 +1,28 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 from pathlib import Path
+
+DEFAULT_FEEDS = [
+    {
+        "name": "hagezi-tif-medium",
+        "url": "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/wildcard/tif.medium-onlydomains.txt",
+    },
+    {
+        "name": "urlhaus-malware",
+        "url": "https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-domains.txt",
+    },
+    {
+        "name": "phishing-army",
+        "url": "https://phishing.army/download/phishing_army_blocklist.txt",
+    },
+]
+
+DEFAULT_NEVER_BLOCK = [
+    "google.com", "googleapis.com", "gstatic.com", "microsoft.com", "windows.com",
+    "windowsupdate.com", "office.com", "office365.com", "live.com", "apple.com",
+    "icloud.com", "amazon.com", "amazonaws.com", "cloudfront.net", "cloudflare.com",
+    "akamai.net", "akamaiedge.net", "github.com", "githubusercontent.com",
+]
 
 
 @dataclass
@@ -11,31 +33,18 @@ class FirewallConfig:
     burst_window_seconds: int = 30
     model_type: str = "statistical"
     decision_threshold: float = 0.7
+    auto_block_threshold: float = 0.95
     learning_rate: float = 0.1
     zscore_threshold: float = 2.5
     auto_promote_after: int = 3
     auto_promote_decay_days: int = 30
-    rare_tlds: list[str] = None
-    common_tlds: list[str] = None
-    device_anomaly_score: float = 0.65
-    trm_weights: dict[str, float] = None
+    rare_tlds: list[str] = field(default_factory=list)
+    never_block: list[str] = field(default_factory=lambda: list(DEFAULT_NEVER_BLOCK))
+    intel_feeds: list[dict] = field(default_factory=lambda: list(DEFAULT_FEEDS))
+    trm_weights: dict[str, float] = field(default_factory=dict)
 
 
 def load_config(path: str) -> FirewallConfig:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
-    return FirewallConfig(
-        entropy_threshold=data.get("entropy_threshold", 3.5),
-        long_query_length=data.get("long_query_length", 60),
-        burst_threshold=data.get("burst_threshold", 12),
-        burst_window_seconds=data.get("burst_window_seconds", 30),
-        model_type=data.get("model_type", "statistical"),
-        decision_threshold=data.get("decision_threshold", 0.7),
-        learning_rate=data.get("learning_rate", 0.1),
-        zscore_threshold=data.get("zscore_threshold", 2.5),
-        auto_promote_after=data.get("auto_promote_after", 3),
-        auto_promote_decay_days=data.get("auto_promote_decay_days", 30),
-        rare_tlds=data.get("rare_tlds", []),
-        common_tlds=data.get("common_tlds", []),
-        device_anomaly_score=data.get("device_anomaly_score", 0.65),
-        trm_weights=data.get("trm_weights", {}),
-    )
+    data = json.loads(Path(path).read_text(encoding="utf-8-sig"))
+    known = FirewallConfig.__dataclass_fields__
+    return FirewallConfig(**{k: v for k, v in data.items() if k in known})

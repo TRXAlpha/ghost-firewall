@@ -11,6 +11,7 @@ class ReportItem:
     flags: dict[str, bool]
     score: float
     decision: str
+    reason: str | None = None
 
 
 @dataclass
@@ -32,6 +33,7 @@ class Report:
                     "flags": item.flags,
                     "score": item.score,
                     "decision": item.decision,
+                    **({"reason": item.reason} if item.reason else {}),
                 }
                 for item in self.items
             ],
@@ -51,7 +53,9 @@ class Report:
         lines.append("Findings:")
         for item in self.items:
             lines.append(
-                f"{item.timestamp} {item.client} {item.domain} {item.qtype} score={item.score:.2f} {item.decision} flags={item.flags}"
+                f"{item.timestamp} {item.client} {item.domain} {item.qtype} score={item.score:.2f} {item.decision}"
+                + (f" ({item.reason})" if item.reason else "")
+                + f" flags={[k for k, v in item.flags.items() if v]}"
             )
         if self.endpoint_findings:
             lines.append("")

@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.venv/
+# runtime state and outputs (can contain sensitive DNS data)
+state/
+intel/
+report*.json
+report*.txt
+feedback*.json
+model*.json
+policy*.json
+profiles*.json
+blocklist*.txt
+endpoint_*.json

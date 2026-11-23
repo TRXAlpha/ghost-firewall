@@ -7,7 +7,8 @@ File: `src/ai_firewall/statistical_model.py`
 
 Mechanism:
 - Maintains rolling means/variances for each feature.
-- Computes per-feature z-scores for a query.
+- Computes per-feature z-scores for a query against the baseline seen so far. Only unusually high values count.
+- Without `--model`, the baseline is built from the current log alone and not saved.
 - Aggregates z-scores into an anomaly score.
 - Applies a light per-domain bias based on feedback.
 
@@ -38,7 +39,7 @@ Cons:
 ## TRM/CTM stub
 File: `src/ai_firewall/trm_adapter.py`
 
-This is a placeholder for future integration. TRM is typically used for vision tasks; DNS and endpoint features are better suited for statistical or tabular models.
+This is a placeholder for future integration: a fixed-weight linear scorer over features scaled to 0..1, used only when `model_type` is `trm_stub`. It does not learn.
 
 ## Configuration
 `config/example_config.json`:
